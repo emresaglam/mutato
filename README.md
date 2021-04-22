@@ -6,5 +6,5 @@ The bot part is not ready yet. :P
 You will need:
 * TIDAL access token and session id. (Need to describe how you can get those.) 
 * Spotify Client_ID and Client_Secret. Check out developer site for spotify on how to get those. I will not descibe it here. 
-
+* Create a .env file in the same folder as the script and put them in that file. Check out the .env.example file
 
