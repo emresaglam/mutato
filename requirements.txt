@@ -1,4 +1,4 @@
 python-telegram-bot==13.1
 spotipy==2.18.0
-tidalapi==0.6.8
+tidalapi>=0.6.8
 python-dotenv==0.17.0

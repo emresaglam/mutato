@@ -21,8 +21,13 @@ def start(update, context):
                                                                     "/mutato <ALBUM URL> "
                                                                     "(example: /mutato https://tidal.com/browse/album/131029033)")
 
+
 def echo(update, context):
-    context.bot.send_message(chat_id=update.effective_chat.id, text=update.message.text)
+    if update.effective_chat.title is not None:
+        context.bot.send_message(chat_id=update.effective_chat.id, text="Ne var?!")
+        logging.info("Channel Message from: {}".format(update.effective_chat.title))
+    else:
+        context.bot.send_message(chat_id=update.effective_chat.id, text=update.message.text)
 
 
 def shut_up(update, context):
@@ -30,6 +35,7 @@ def shut_up(update, context):
 
 
 def grab_a_kitten(update, context):
+    logging.info("grab a kitten activated!")
     catapi_token = "CATAPI_TOKEN"
     CATAPITOKEN = os.getenv(catapi_token)
     if CATAPITOKEN is None:
@@ -52,7 +58,7 @@ def grab_a_kitten(update, context):
 def get_tidal_album_id(tidal_url):
     o = urlparse(tidal_url)
     if o.netloc != "tidal.com":
-        raise Exception("Sorry this domain is not a Tidal domain: {}".format(o.netloc))
+        raise ValueError("Sorry this domain is not a Tidal domain: {}".format(o.netloc))
     else:
         tidal_album_id = o.path.split("/")[-1]
 
@@ -60,6 +66,14 @@ def get_tidal_album_id(tidal_url):
 
 
 def tidal2spotify(update, context):
+    '''
+    Too Complicated function to convert a Tidal Album to a Spotify Album.
+    I will probably need to rewrite this as it is a mess.
+    :param update:
+    :param context:
+    :return:
+    '''
+    logging.info("Tidal to Spotify Activated by {}".format(update.effective_user.first_name))
     load_dotenv()
 
     tidal_access_token = os.getenv('TIDAL_ACCESS_TOKEN')
@@ -67,25 +81,34 @@ def tidal2spotify(update, context):
     tidal_token_type = os.getenv('TIDAL_TOKEN_TYPE')
     spotify_client_id = os.getenv('SPOTIFY_CLIENT_ID')
     spotify_client_secret = os.getenv('SPOTIFY_CLIENT_SECRET')
+    chat_id = os.getenv('CHAT_ID')
     print(context.args)
     tidal_url = context.args[0]
     album_info = {}
-    tidal_album_id = get_tidal_album_id(tidal_url)
-
+    try:
+        tidal_album_id = get_tidal_album_id(tidal_url)
+    except ValueError:
+        print("Domain mismatch Error")
+        context.bot.send_message(chat_id=update.effective_chat.id, text="Wrong Domain!")
+        return
     spotify = spotipy.Spotify(client_credentials_manager=SpotifyClientCredentials(client_id=spotify_client_id,
                                                                                   client_secret=spotify_client_secret))
     session = tidalapi.Session()
-    session.load_oauth_session(session_id=tidal_session_id, access_token=tidal_access_token, token_type=tidal_token_type)
+    try:
+        session.load_oauth_session(session_id=tidal_session_id, access_token=tidal_access_token, token_type=tidal_token_type)
+    except KeyError as e:
+        logging.error("KeyError {}".format(e))
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text="I'm having difficulties now :( You might need to renew your Tidal Auth Token!")
+        return
     tidal_album = session.get_album(tidal_album_id)
-
-    #print("{}, {}, {}, {}".format(tidal_album.artist.name, tidal_album.name, tidal_album.release_date, tidal_url))
 
     results = spotify.search(q='artist:' + tidal_album.artist.name + ' album:'
                              + tidal_album.name , type='artist,album')
-    print("{}, {}, {}, {}".format(results["albums"]["items"][0]["artists"][0]["name"],
-          results["albums"]["items"][0]["name"], results["albums"]["items"][0]["release_date"],
-          results["albums"]["items"][0]["external_urls"]["spotify"]))
-
+    if len(results["albums"]["items"]) == 0:
+        logging.info("I couldn't find that album in Spotify. I'm done... Sorry... I tried...")
+        context.bot.send_message(chat_id=update.effective_chat.id, text="Sorry. This album doesn't exist in Spotify!")
+        return
     album_info = {"tidal": {"artist_name": tidal_album.artist.name,
                             "album_name": tidal_album.name,
                             "release_date": "{}".format(tidal_album.release_date.year),
@@ -95,12 +118,16 @@ def tidal2spotify(update, context):
                             "release_date": results["albums"]["items"][0]["release_date"],
                             "album_url": results["albums"]["items"][0]["external_urls"]["spotify"]}
                   }
+    # This is a test for a Channel message mainly to test bot in a channel.
+    # I will need to make this better. Mainly to handle multiple channels.
+    context.bot.send_message(chat_id=chat_id, text="TIDAL: {}\nSPOTIFY: {}".format(
+        album_info["tidal"]["album_url"],
+        album_info["spotify"]["album_url"]))
     context.bot.send_message(chat_id=update.effective_chat.id, text="{}".format(album_info["spotify"]["album_url"]))
     return album_info
 
+
 if __name__ == "__main__":
-    #tidal_url="https://tidal.com/browse/album/35614665"
-    #print(json.dumps(tidal2spotify(tidal_url)))
     load_dotenv()
 
     api_token = "BOTAPI_TOKEN"
