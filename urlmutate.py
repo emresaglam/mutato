@@ -135,10 +135,11 @@ def tidal2spotify(update, context):
                   }
     # Below is a test for a Channel message mainly to test bot in a channel.
     # I will need to make this better. Mainly to handle multiple channels.
-    # Disabling bottest for now.
-    #context.bot.send_message(chat_id=chat_id, text="TIDAL: {}\nSPOTIFY: {}".format(
-    #    album_info["tidal"]["album_url"],
-    #    album_info["spotify"]["album_url"]))
+    context.bot.send_message(chat_id=chat_id, text="TIDAL: {}\nSPOTIFY: {}".format(
+        album_info["tidal"]["album_url"],
+        album_info["spotify"]["album_url"]))
+    logging.debug("I was able to convert the tidal link {} to the Spotify link {}"
+                  .format(tidal_url, album_info["spotify"]["album_url"]))
     context.bot.send_message(chat_id=update.effective_chat.id, text="{}".format(album_info["spotify"]["album_url"]))
     return album_info
 
