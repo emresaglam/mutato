@@ -8,7 +8,7 @@ import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 from urllib.parse import urlparse
 import os
-from dotenv import load_dotenv
+from dotenv import load_dotenv, dotenv_values
 
 
 def start(update, context):
@@ -71,6 +71,31 @@ def get_tidal_album_id(tidal_url):
     return tidal_album_id
 
 
+def renew_tidal_token(update, context):
+    def tellmaster(text):
+        '''
+        Function to send the renewal link to the command issuer (See that I'm using it in the
+        login_ouath_simple function below)
+        :param text: The text that is coming from the login_oauth_simple function output
+        :return: nada
+        '''
+        context.bot.send_message(chat_id=update.effective_chat.id, text=text)
+    '''
+    This is used to renew the tidal token and recreate the .env file automatically.
+    IMPORTANT: You need to create a working .env file first! Then use this script to
+    renew the TIDAL TOKENS ONLY! It really depends on your original .env file.
+    '''
+    config = dotenv_values(".env")
+    session = tidalapi.Session()
+    session.login_oauth_simple(function=tellmaster)
+    logging.info("Renewed the token... Or at least I tried. Writing to disk!")
+    config["TIDAL_ACCESS_TOKEN"] = session.access_token
+    config["TIDAL_SESSION_ID"] = session.session_id
+    f = open(".env", "w")
+    for key in config:
+        f.write("{}=\"{}\"\n".format(key, config[key]))
+
+
 def tidal2spotify(update, context):
     '''
     Too Complicated function to convert a Tidal Album to a Spotify Album.
@@ -114,7 +139,8 @@ def tidal2spotify(update, context):
     except KeyError as e:
         logging.error("KeyError {}".format(e))
         context.bot.send_message(chat_id=update.effective_chat.id,
-                                 text="I'm having difficulties now :( You might need to renew your Tidal Auth Token!")
+                                 text="I'm having difficulties now :( You might need to renew your Tidal Auth Token!"
+                                      "\nIf you have console access, you might want to try /renewtoken")
         return
     tidal_album = session.get_album(tidal_album_id)
 
@@ -164,6 +190,8 @@ if __name__ == "__main__":
     dispatcher.add_handler(kitty_handler)
     mutato_handler = CommandHandler('mutato', tidal2spotify)
     dispatcher.add_handler(mutato_handler)
+    renew_handler = CommandHandler('renewtoken', renew_tidal_token)
+    dispatcher.add_handler(renew_handler)
 
     # If it doesn't match any handler, the bot idiotically echos your message back to you!
     echo_handler = MessageHandler(Filters.text & (~Filters.command), echo)
