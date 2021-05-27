@@ -141,6 +141,9 @@ def tidal2spotify(update, context):
         context.bot.send_message(chat_id=update.effective_chat.id,
                                  text="I'm having difficulties now :( You might need to renew your Tidal Auth Token!"
                                       "\nIf you have console access, you might want to try /renewtoken")
+        context.bot.send_message(chat_id=chat_id,
+                                 text="I'm having difficulties now :( You might need to renew your Tidal Auth Token!"
+                                      "\nIf you have console access, you might want to try /renewtoken")
         return
     tidal_album = session.get_album(tidal_album_id)
 
@@ -161,9 +164,11 @@ def tidal2spotify(update, context):
                   }
     # Below is a test for a Channel message mainly to test bot in a channel.
     # I will need to make this better. Mainly to handle multiple channels.
-    context.bot.send_message(chat_id=chat_id, text="TIDAL: {}\nSPOTIFY: {}".format(
-        album_info["tidal"]["album_url"],
-        album_info["spotify"]["album_url"]))
+
+    # Uncomment below to receive mutato messages in your control channel (channel_id)
+    #context.bot.send_message(chat_id=chat_id, text="TIDAL: {}\nSPOTIFY: {}".format(
+    #    album_info["tidal"]["album_url"],
+    #    album_info["spotify"]["album_url"]))
     logging.debug("I was able to convert the tidal link {} to the Spotify link {}"
                   .format(tidal_url, album_info["spotify"]["album_url"]))
     context.bot.send_message(chat_id=update.effective_chat.id, text="{}".format(album_info["spotify"]["album_url"]))
