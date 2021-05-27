@@ -171,7 +171,9 @@ def tidal2spotify(update, context):
     #    album_info["spotify"]["album_url"]))
     logging.debug("I was able to convert the tidal link {} to the Spotify link {}"
                   .format(tidal_url, album_info["spotify"]["album_url"]))
-    context.bot.send_message(chat_id=update.effective_chat.id, text="{}".format(album_info["spotify"]["album_url"]))
+    context.bot.send_message(chat_id=update.effective_chat.id, text="TIDAL: {}\nSPOTIFY: {}".format(
+        album_info["tidal"]["album_url"],
+        album_info["spotify"]["album_url"]))
     return album_info
 
 
