@@ -85,15 +85,25 @@ def renew_tidal_token(update, context):
     IMPORTANT: You need to create a working .env file first! Then use this script to
     renew the TIDAL TOKENS ONLY! It really depends on your original .env file.
     '''
+    # Read the existing .env
     config = dotenv_values(".env")
+
+    # Renew the session (This will send the bot owner a link)
     session = tidalapi.Session()
     session.login_oauth_simple(function=tellmaster)
     logging.info("Renewed the token... Or at least I tried. Writing to disk!")
+
+    # Reset the config variables, write them to disk and update the OS env variables.
     config["TIDAL_ACCESS_TOKEN"] = session.access_token
     config["TIDAL_SESSION_ID"] = session.session_id
+    os.environ["TIDAL_ACCESS_TOKEN"] = config["TIDAL_ACCESS_TOKEN"]
+    os.environ["TIDAL_SESSION_ID"] = config["TIDAL_SESSION_ID"]
     f = open(".env", "w")
     for key in config:
         f.write("{}=\"{}\"\n".format(key, config[key]))
+    logging.info("Token written to disk, also OS Env variables are updated...")
+
+    # Doesn't return anything :)
 
 
 def tidal2spotify(update, context):
