@@ -1,3 +1,5 @@
+This project is not maintained anymore and archived as of Dec 8th 2022.
+
 # mutato
 A Telegram bot that converts different music links to each other.
 
